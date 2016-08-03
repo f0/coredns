@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -69,6 +70,7 @@ func (e Etcd) A(zone string, state middleware.State, previousRecords []dns.RR) (
 			}
 			m1, e1 := e.Proxy.Lookup(state, target, state.QType())
 			if e1 != nil {
+				errors.New(target + "IN " + state.Type() + ":" + e1.Error())
 				println(target + "IN " + state.Type() + ": " + e1.Error())
 				continue
 			}
@@ -131,6 +133,7 @@ func (e Etcd) AAAA(zone string, state middleware.State, previousRecords []dns.RR
 			m1, e1 := e.Proxy.Lookup(state, target, state.QType())
 			if e1 != nil {
 				println(target + "IN " + state.Type() + ": " + e1.Error())
+				errors.New(target + "IN " + state.Type() + ": " + e1.Error())
 				continue
 			}
 			// Len(m1.Answer) > 0 here is well?
@@ -195,6 +198,7 @@ func (e Etcd) SRV(zone string, state middleware.State) (records, extra []dns.RR,
 					extra = append(extra, m1.Answer...)
 				} else {
 					println(srv.Target + "IN A: " + e1.Error())
+					errors.New(srv.Target + "IN A: " + e1.Error())
 				}
 
 				m1, e1 = e.Proxy.Lookup(state, srv.Target, dns.TypeAAAA)
@@ -207,6 +211,7 @@ func (e Etcd) SRV(zone string, state middleware.State) (records, extra []dns.RR,
 					}
 				} else {
 					println(srv.Target + "IN AAAA: " + e1.Error())
+					debugTxt := errorToTxt(errors.New(srv.Target + "IN AAAA: " + e1.Error()))
 				}
 				break
 			}
@@ -266,6 +271,7 @@ func (e Etcd) MX(zone string, state middleware.State) (records, extra []dns.RR, 
 					extra = append(extra, m1.Answer...)
 				} else {
 					println(mx.Mx + "IN A: " + e1.Error())
+					errors.New(mx.Mx + "IN A: " + e1.Error())
 				}
 				m1, e1 = e.Proxy.Lookup(state, mx.Mx, dns.TypeAAAA)
 				if e1 == nil {
@@ -276,6 +282,7 @@ func (e Etcd) MX(zone string, state middleware.State) (records, extra []dns.RR, 
 						}
 					}
 				} else {
+					errors.New(mx.Mx + "IN AAAA: " + e1.Error())
 					println(mx.Mx + "IN AAAA: " + e1.Error())
 				}
 				break
